@@ -9,14 +9,11 @@
 </div>
 
 <div class="powered-by">
-  {{ __('footer.powered', '<a class="theme-link" href="http://hexo.io">Hexo</a>') }}
+  一个年迈的程序员
 </div>
 
 <div class="theme-info">
-  {{ __('footer.theme') }} -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.{{ theme.scheme }}
-  </a>
+  怀揣着18岁的心
 </div>
 
 {% block footer %}{% endblock %}
