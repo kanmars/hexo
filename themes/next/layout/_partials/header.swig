@@ -57,9 +57,41 @@
           </a>
         </li>
       {% endif %}
+	  <li class="menu-item menu-item-search">
+	  <a href="javascript:void(0)" id="shareThisPage_bth" rel="section">
+		  <i class="menu-item-icon fa fa-thumbs-o-up fa-fw"></i> <br />
+		  <span id="shareThisPage_text">分享</span>
+	  </a>
+	  </li>
     </ul>
   {% endif %}
-
+	  <div id="shareThisPage" class="site-meta" style="display:none;">
+		<div id="shareThisPage_canvas" style="display:none;"></div>
+	  </div>
+	  <script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
+	  <script type="text/javascript" src="/js/jquery.qrcode.min.js"></script>
+	  <script type="text/javascript">
+	  
+	    jQuery.getScript("/js/jquery.qrcode.min.js");
+		$("#shareThisPage_bth").toggle(function(){
+			$("#shareThisPage_canvas").empty();
+			$("#shareThisPage_canvas").qrcode({ 
+				render: "canvas", //table方式 
+				width: 100, //宽度 
+				height:100, //高度
+				correctLevel:0,
+				text: window.location.href //任意内容 
+			})
+			$("#shareThisPage_canvas").show();
+			$("#shareThisPage").show();
+			$("#shareThisPage_text").text("关闭分享");
+		},function(){
+			$("#shareThisPage_canvas").empty();
+			$("#shareThisPage_canvas").hide();
+			$("#shareThisPage").hide();
+			$("#shareThisPage_text").text("分享");
+		});
+	  </script>
   {% if hasSearch %}
     <div class="site-search">
       {% include 'search.swig' %}
