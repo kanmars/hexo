@@ -68,9 +68,4 @@ theme: hexo-theme-next
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type: github
-  message: "update"
-  #repo: git://kanmars@github.com/kanmars/kanmars.github.io.git
-  #repo: https://github.com/kanmars/kanmars.github.com.git
-  repo: ssh://kanmars@github.com/kanmars/kanmars.github.com
-  branch: master
+  type:
