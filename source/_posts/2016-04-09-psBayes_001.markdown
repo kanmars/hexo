@@ -1,0 +1,103 @@
+---
+layout: post
+title:  "[KANMARS原创] -  贝叶斯公式"
+desc: "本文介绍了机器学习领域的贝叶斯公式"
+date: 2016-04-09 08:05:00
+tags: [server,java]
+---
+
+贝叶斯公式是一个很朴素的定理，可以参考百度百科：
+[http://baike.baidu.com/link?url=h2V8ZHTHcxk05h7zqO_LIqN05F18CunIaMli3Zlabo6SV10I5E8qp4QODWkutCXEpYzUlM4KsCijmV5pIkmTHq](http://baike.baidu.com/link?url=h2V8ZHTHcxk05h7zqO_LIqN05F18CunIaMli3Zlabo6SV10I5E8qp4QODWkutCXEpYzUlM4KsCijmV5pIkmTHq "百度百科：贝叶斯公式")
+
+> 贝叶斯公式（发表于1763年）为： P(H[i]/A)=P(H[i])*P(A│H[i])/{P(H[1])*P(A│H[1]) +P(H[2])*P(A│H[2])+…+P(H[n])*P(A│H[n])}
+
+> 一些文献中把P(H[1])、P(H[2])称为基础概率，P(A│H[1])为击中率，P(A│H[2])为误报率[1][2]  。
+
+开始工作才发现，如果你想深入的进入一个领域有三门课是必须的**基础**：微积分，线性代数，概率论
+
+凡是高深一点的知识都是以微积分为原理进行分析的，例如，对数据的统计、求数据的极值、求最优方案
+
+凡是专业性略强一点的知识，都是线性代数为基础的，例如，矩阵运算，求矩阵变换，求最佳策略
+
+凡是涉及重复操作的工作，都是以概率论为基础的，例如，垃圾邮件分类，如何判定一个事物是否靠谱，如何判定是否有风险
+
+韩寒说数学学到初中就够了，现在看来，是一个初中文化水平的同学的不成熟见解
+
+---
+我们仅说概率论
+
+大学时自从概率论课上捡了一次橡皮，后来我就再也听不懂了。贝叶斯公式在问题清单中位列第一。
+
+直到最近反复看了十来遍......人傻勿扰
+
+贝叶斯公式需要看它的推断过程：
+
+1、条件概率公式
+
+<img src="http://www.forkosh.com/mathtex.cgi?\Large P(B|A)=\frac{P(AB)}{P(A)}">
+
+2、用全概率公式改写
+				
+<img src="http://www.forkosh.com/mathtex.cgi?\Large P(AB)=P(B)P(A|B)">
+
+<img src="http://www.forkosh.com/mathtex.cgi?\Large P(A)=\sum_{j=1}^NP(A|B_j)P(B_j)">
+
+3、得到贝叶斯公式
+
+<img src="http://www.forkosh.com/mathtex.cgi? \Large P(B|A)=\frac{P(B)P(A|B)}{\sum_{j=1}^NP(A|B_j)P(B_j)}">
+
+公式已经列在这儿了，关键问题在于我们怎么使用它。
+
+贝叶斯公式的使用方式举例如下：
+
+>某地区肝癌的发病率为0.0004，先用甲胎蛋白法进行普查。医学研究表明，化验结果是存在错误的。
+>已知患有肝癌的人其化验结果99%呈阳性（有病），而没有患肝癌的人其化验结果99.9%呈阴性（无病）。
+>现某人的检查结果呈阳性，问他真患肝癌的概率是多少？
+>
+>**解**  记B事件“被检查者患有肝癌”， A为事件“检查结果为阳性”，由题设知
+>
+><img src="http://www.forkosh.com/mathtex.cgi?\Large P(B)=0.0004">
+><img src="http://www.forkosh.com/mathtex.cgi?\Large P(\overline{B})=0.9996">
+>
+><img src="http://www.forkosh.com/mathtex.cgi?\Large P(A|B)=0.99">
+><img src="http://www.forkosh.com/mathtex.cgi?\Large P(A|\overline{B})=0.001">
+>
+>根据贝叶斯公式
+>
+>
+><img src="http://www.forkosh.com/mathtex.cgi?
+>\Large P(B|A)=\frac{P(B)P(A|B)}{P(A|B)P(B)+P(A|\overline{B})P(\overline{B})}">
+>
+>代入值可得
+>
+><img src="http://www.forkosh.com/mathtex.cgi?
+>\Large P(B|A)=\frac{0.0004 * 0.99}{0.99 * 0.0004+0.001 * 0.9996}=0.284">
+
+
+也就是说，如果一个人检查结果呈阳性，那么他患肝癌的概率只有0.284
+
+这个结果有点不可思议，尽管误诊率仅有1.1%，但是结果的可靠性只有28.4%。
+
+>但仔细分析一下就可以理解了。因为肝癌发病率很低，在10000人中越有四人，而约有9996人不患肝癌。
+>
+>对10000个人中，用甲胎蛋白法进行检查，按其错检的概率可知，9996个不患肝癌者中约有约有9996X0.001=9.996个呈阳性。
+>
+>另外四个真患肝癌者的检查报告中约有4X0.99=3.96个呈阳性，仅从13.956个呈阳性者中看出，真患肝癌的3.96人约占28.4%。
+
+如何提高这个可信度？这才是贝叶斯公式的正式用途：
+
+在实际中，常采用复查的方法来减少错误率，对首次检查得的人群再进行复查：
+><img src="http://www.forkosh.com/mathtex.cgi?\Large P(B)=0.284">
+>
+><img src="http://www.forkosh.com/mathtex.cgi?
+>\Large P(B|A)=\frac{0.284 * 0.99}{0.99 * 0.284+0.716 * 0.9996}=0.997">
+
+这样就可以用新的证据来进一步加强或者减弱信念。
+
+因此，贝叶斯主义者又称之为信念主义者。根据此主义，会假定一个初始信念P(B)，即先验概率，通过新证据的出现，对概率
+
+进行修正，得到了后验概率。再将后验概率作为新的先验概率，通过其他的新证据对结论进行休整......
+
+在迭代过程中，信念会收敛于一个概率范围，即此信念的真实概率范围。
+
+这是一种朴素的认识世界的方法。
