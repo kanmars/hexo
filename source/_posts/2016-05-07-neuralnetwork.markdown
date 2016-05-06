@@ -18,7 +18,7 @@ brain.js是一个javascript的神经网络，（最近javascript越来越万能�
 关于brain.js的官网如下地址：
 >http://www.open-open.com/lib/view/open1436520926911.html
 
-其实用说明很简单：
+其使用说明很简单：
 
 	var net = new brain.NeuralNetwork();
 
