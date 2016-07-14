@@ -1,0 +1,573 @@
+---
+layout: post
+title:  "[KANMARS原创]-人工神经网络brain.js算法解析"
+desc: "人工神经网络brain.js算法解析"
+date: 2016-07-13 19:13:00
+tags: [server,javascript]
+---
+<p>
+	在机器学习这一个未来的、伟大的领域，有一个小小的分支叫做人工智能。
+</p>
+<p>
+	举个例子：照片识别、信用卡图片识别、声音语言解析、数据聚类与离散。
+</p>
+<p>
+	机器学习按照有无监督者（或者有无导师），区分为监督学习和无监督学习http://www.cnblogs.com/ysjxw/articles/1149004.html<br />
+监督学习是最常见的学习分类，在训练集中指出正确的结果，让网络自己去适应这种结果。
+</p>
+<p>
+	而无监督学习，则大致有两种实现思路。
+</p>
+<p>
+	<span style="font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;font-size:13px;line-height:19.5px;background-color:#FFFFFF;">第一种思路是在指导Agent时不为其指定明确的分类，而是在成功时采用某种形式的激励制度。</span>
+</p>
+<p>
+	<span style="font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;font-size:13px;line-height:19.5px;background-color:#FFFFFF;">第二种思路是<span style="font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;font-size:13px;line-height:19.5px;background-color:#FFFFFF;">称之为聚合（原文为clustering，译者注）。这类学习类型的目标不是让效用函数最大化，而是找到训练数据中的近似点。聚合常常能发现那些与假设匹配的相当好的直观分类。例如，基于人口统计的聚合个体可能会在一个群体中形成一个富有的聚合，以及其他的贫穷的聚合。</span></span>
+</p>
+<p>
+	<span style="font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">今天我们来从算法上分析一下人工智能的一种实现brain.js。它有输入集、隐层、输出集的基本结构，采用了BP神经网络结构，有自己的激活函数simoid，有自己的误差backpropagation算法。</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">之前已经有一篇文章介绍了brain.js的用法和内部的代码结构，因此不再赘述，今天重点描述一下brain.js的BP算法和数据结构。了解这些是很有必要的，当你可以熟练掌握这些基础知识，你可以很直接的创造一套自己的人工智能工具，例如：一个简单的验证码识别工具，一个图片分类器，一个看似有点智能的自动对话程序......</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span style="font-size:24px;"><span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><strong>第一章、构造函数</strong></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">var NeuralNetwork = function(options) {<br />
+&nbsp; options = options || {};							//初始化全局变量options<br />
+&nbsp; this.learningRate = options.learningRate || 0.3;	//设置学习比率	是options.learningRate或者0.3<br />
+&nbsp; this.momentum = options.momentum || 0.1;			//惯性比率，用于设置“新的变动的影响程度”<br />
+&nbsp; this.hiddenSizes = options.hiddenLayers;			//隐层的节点的数量是一个二维数组：层数/该层节点数<br />
+<br />
+&nbsp; this.binaryThresh = options.binaryThresh || 0.5;	//阈值<br />
+}<br />
+在构造函数中初始化一些全局的值，如备注所式，用于设置一些具有全局性影响的值。<br />
+</span></span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">参数含义如下：</span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">learningRate用于影响</span>节点对新知识的学习速度，如果该比例较大，则每个node在变动时会采用较剧烈的幅度，速度会加快稳定性会下降</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">momentum</span>用于影响节点对旧知识的保留，如果该比例较大，则节点发生的变动会有较剧烈的幅度，速度会加快稳定性会下降<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">hiddenLayers是隐层的节点的数量，是一个二维数组：层数/该层节点数，涉及在训练时（神经网络从训练开始，因此此句话等价于“在开始时”）初始化隐层节点的数量。</span><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">binaryThresh是一个阈值</span>,在test模式下才能使用<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span style="font-size:24px;"><span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><strong>第二章、训练</strong></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">train: function(data, options) {<br />
+&nbsp; &nbsp; data = this.formatData(data);<br />
+<br />
+&nbsp; &nbsp; ......<br />
+}</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">我们逐行解析一下，挑重要的看：<br />
+var iterations = options.iterations || 20000;													//设置每个节点的迭代次数为20000，用逼近论逐步逼近目标</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">var errorThresh = options.errorThresh || 0.005;													//误差的目标值为0.005</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">......</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">var inputSize = data[0].input.length;															//设置输入数量为data[0]的输入的数组的长度</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">var outputSize = data[0].output.length;															//设置输出数量为data[0]</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">var hiddenSizes = this.hiddenSizes;																//隐层数量</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">if (!hiddenSizes) {																				//如果隐层数量未初始化，则设置隐层数量为一个数组，数组的0号元素为3到inputSize/2的MAX<br />
+&nbsp; &nbsp; &nbsp; hiddenSizes = [Math.max(3, Math.floor(inputSize / 2))];<br />
+}</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.initialize(sizes); //初始化，详见第二章第一节、初始化</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">for (var i = 0; i &lt; iterations &amp;&amp; error &gt; errorThresh; i++) {									//遍历iterations次，并且在当前偏差大于误差的目标值为0.005的情况下进行训练<br />
+&nbsp; &nbsp; &nbsp; var sum = 0;																					//误差初始值为0<br />
+&nbsp; &nbsp; &nbsp; for (var j = 0; j &lt; data.length; j++) {														//对data数量进行逐个训练<br />
+&nbsp; &nbsp; &nbsp; &nbsp; var err = this.trainPattern(data[j].input, data[j].output, learningRate);//详见第二章第二节训练匹配</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; //训练trainPattern，传入的值为第j个输入，第j个输出，学习比率，输出结果为当前这一行数据，在各个网络层各个节点的误差的平方的平均数<br />
+&nbsp; &nbsp; &nbsp; &nbsp; sum += err;																					//计算误差的和<br />
+&nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; error = sum / data.length;																	//计算误差的平均值<br />
+<br />
+&nbsp; &nbsp; &nbsp; if (log &amp;&amp; (i % logPeriod == 0)) {															//如果在logPeriod的倍数，则打印日志<br />
+&nbsp; &nbsp; &nbsp; &nbsp; log("iterations:", i, "training error:", error);<br />
+&nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; if (callback &amp;&amp; (i % callbackPeriod == 0)) {													//如果在callbackPeriod的倍数，则调用回调函数<br />
+&nbsp; &nbsp; &nbsp; &nbsp; callback({ error: error, iterations: i });<br />
+&nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; }<br />
+<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+<strong><span style="font-size:24px;">第二章第一节、初始化</span></strong></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.initialize(sizes);</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">在该方法内部，会对神经网络的数据结构进行初始化，代码比较简单，我们关键描述几个数据结构</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.outputLayer = this.sizes.length - 1;		//输出层的最后一个下标</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.biases = []; //阈值的二维数组:层/值</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.weights = [];								//权重的三维数组:层/节点/值	[layer][node][k]</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.outputs = [];								//输出结果的二维数组:层/值</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.deltas = [];								//偏差的二维数组：层/值</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.changes = []; // for momentum				//改变值的三维数组：层/节点/值	[layer][node][k]</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.errors = [];								//误差的二维数组：层/值</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><strong><span style="font-size:24px;"></span></strong><strong><span style="font-size:24px;"></span></strong><strong><span style="font-size:24px;"></span></strong><strong><span style="font-size:24px;"></span></strong><strong><span style="font-size:24px;">第二章第二节、训练匹配</span></strong><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.trainPattern(data[j].input, data[j].output, learningRate);</span><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">该方法在两层循环中被调用，第一层循环为训练次数iterations，第二层循环为data[j]输入的数据的数量</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">完成了加快训练的效果（目前很多神经网络的重点就在提高训练速度和减少误差的方向上）</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.runInput(input);//信号的前馈传播，详见第二章第二节第一部分、信号的前馈传播<br />
+<br />
+this.calculateDeltas(target);//计算误差deltas，详见第二章第二节第二部分、误差的反向传播一计算误差deltas<br />
+<br />
+this.adjustWeights(learningRate);//重新计算权重，详见第二章第二节第三部分，误差的反向传播二权重的重新调整<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span style="font-size:24px;"><span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><strong>第二章第二节第一部分、信号的前馈传播</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.runInput(input);//</span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">信号的前馈传播</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">对input为单行的输入数据向量进行操作，该方法代表了一个神经网络对某行数据的操作<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.outputs[0] = input;//设置this.outputs的第0个元素为输入的数据<br />
+<br />
+&nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//针对每个输出层/隐层去执行，从第一层开始，（0层为输入）</span><br />
+&nbsp; &nbsp; for (var layer = 1; layer &lt;= this.outputLayer; layer++) {</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; <span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//针对当前隐层的节点进行操作</span>&nbsp;<br />
+&nbsp; &nbsp; &nbsp; for (var node = 0; node &lt; this.sizes[layer]; node++) {&nbsp;</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//获取当前节点的权重数组</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; var weights = this.weights[layer][node];&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//获取当前节点的阈值</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; var sum = this.biases[layer][node];&nbsp;</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//对每个输入项进行遍历</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; for (var k = 0; k &lt; weights.length; k++) {&nbsp;</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//总和等于当前节点和上一个节点的输入乘以权重</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sum += weights[k] * input[k];&nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; //激活函数-输出值等于1除以(1+-sum的以e为底的指数函数,即e的-sum次方，位于0-1之间)</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.outputs[layer][node] = 1 / (1 + Math.exp(-sum));</span><br />
+&nbsp; &nbsp; &nbsp; } <br />
+&nbsp; &nbsp; &nbsp; var output = input = this.outputs[layer];														//递归将当前的输出作为下一层的输入<br />
+&nbsp; &nbsp; }<br />
+&nbsp; &nbsp; return output;																					//在所有层的神经网络通过之后，输出结果<br />
+<br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">上述代码中的激活函数，并不是去激活什么，而是指<span style="color:#E53333;"><strong>如何把“激活的神经元的特征”通过函数把特征保留并映射出来</strong></span>（保留特征，去除一些数据中的冗余），<span style="color:#E53333;"><strong>这是神经网络能解决非线性问题关键</strong></span>。</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">激活函数是用来加入非线性因素的，因为线性模型的表达力不够</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">该算法为simoid激活函数，但是如果出现极值，该算法可能会出现大批节点死亡，即值为0无法激活的情况</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">其他可选算法推荐ReLU即f(x)=max(x,0);比较简单</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">关于激活函数的研究，可以参考http://www.mamicode.com/info-detail-873243.html</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">①单侧抑制	//通过激活函数把特征保留并映射出来</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">②相对宽阔的兴奋边界	//??</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">③稀疏激活性	//节省能量，生物神经具有稀疏激活性，因此在数学逻辑上也是需要有稀疏激活特性的</span><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">以上红色内容，是小白理解神经网络的关键~~~</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">但是对于专业数学家，这个是需要用数学证明的：证明特征是可再分的，再分的特征根据贝叶斯公式，多个特征将会休整人的信念，再根据逼近论用较简单的函数来代替复杂的函数。</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">最终可以通过任意个节点来拟合任何一个复杂函数。</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">这就是神经网络最神奇之处，它可以实现任何一个符合函数的拟合，也就是说：输入一个图片，它能告诉你这张图片上的物种叫做猫。</span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+<br />
+<span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><strong>第二章第二节第二部分、误差的反向传播一计算误差deltas</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.calculateDeltas(target);//计算误差deltas</span><br />
+在BP神经网络中、误差的反向传播，进而对权重进行调整是核心内容</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">代码如下：</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">calculateDeltas: function(target) {																//误差计算<br />
+&nbsp; &nbsp; for (var layer = this.outputLayer; layer &gt;= 0; layer--) {										//对每个输出层进行遍历，逆向计算<br />
+&nbsp; &nbsp; &nbsp; for (var node = 0; node &lt; this.sizes[layer]; node++) {										//对当前层的节点数进行遍历<br />
+&nbsp; &nbsp; &nbsp; &nbsp; var output = this.outputs[layer][node];														//获取当前节点的输出<br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; var error = 0;																				//偏差为0<br />
+&nbsp; &nbsp; &nbsp; &nbsp; if (layer == this.outputLayer) {															//如果是最后一层<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; error = target[node] - output;															//误差等于目标值减去输出-》即初始误差<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; else {																						//非最后一层<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var deltas = this.deltas[layer + 1];														//获取到下一层的误差的数组</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //deltas在最后一层时赋予了初始值，此后随着层数的减少，低次获取上一次的误差//deletas是二维数组，层/值<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; for (var k = 0; k &lt; deltas.length; k++) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; error += deltas[k] * this.weights[layer + 1][k][node];</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //当前节点的error为下一层的偏差按照权重的总和值</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //此处对误差的评估有多种算法，算数加权 &nbsp;为其中一种，此外还有开方差等方法<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; this.errors[layer][node] = error;															//当前层，当前node的error<br />
+&nbsp; &nbsp; &nbsp; &nbsp; this.deltas[layer][node] = error * output * (1 - output);&nbsp;<br />
+&nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; }<br />
+&nbsp; },</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">上述代码有两个要点</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">1、error的计算，是通过下一层的误差根据权重汇总起来的</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">2、deltas的计算，是通过公式deltas=error * output * (1-output)计算出的</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">在最后一行代码中，有一个神奇的deltas = error*output*(1-output)</span><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//当前层，当前node的为errors误差 * 当层的输出 * (1-当层的输出)</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//该算法为BP前馈申请网络的误差传播算法，详见论文http://www.doc88.com/p-601587528491.html</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//大概原理如下:BP</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//BP算法实质是求取误差函数的最小值问题。采用非线性规划中的最速下降方法，按误差函数的负</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//梯度方向修改权系数。从其数学表达可知：多层网络的训练方法是把一个样本加到输入层，并根据</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//向前传播的规则X(k,j) = f(U(k,j))，一层一层向输出层传递，最终在输出层得到输出X(m,i)，把X(m,i)</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//和期望输出Yi进行比较，若两者不等，则产生误差信号e，接着按下式反向传播修改权系</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//此处公式推导可见http://blog.csdn.net/zhouchengyunew/article/details/6267193的“二、BP算法的数学表达”章节</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//或者关于BP网络的数学表达可以参见http://www.cnblogs.com/wengzilin/archive/2013/04/24/3041019.html</span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//最终结论为this.deltas[layer][node] = error * output * (1 - output);</span><br />
+<br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//但比较粗糙直观的理解是:</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//<strong><span style="color:#E53333;">计算出的error是子层误差的总和，而output和(1-output)是一种修正，因本例中激活函数为simoid，因此output在(0,1)之间</span></strong></span><br />
+<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//<span style="color:#E53333;"><strong>因此output和(1-output)呈x在[0-1]区间的倒U型，因此output如果位于0.5时，error就会有较大的变动，</strong></span></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//<span style="color:#E53333;"><strong>位于两边时，就会有较小的变动，因此</strong></span></span><span style="font-size:13px;line-height:19.5px;color:#E53333;background-color:#FFFFFF;"><strong>delta = error * output * (1 - output);	这个函数就会有一种“趋势”来</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">//<span style="color:#E53333;"><strong>倾向与0，结合adjustWeights误差反向传播调整公式，</strong></span></span><span style="font-size:13px;line-height:19.5px;color:#E53333;background-color:#FFFFFF;"><strong>就会使误差在最终趋向于0-&gt;实现“误差降低的特性”</strong></span><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+<br />
+<span style="font-size:24px;line-height:19.5px;background-color:#FFFFFF;"><strong>第二章第二节第三部分，误差的反向传播二权重的重新调整</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.adjustWeights(learningRate);																//重新计算权重----此处为核心操作</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">adjustWeights: function(learningRate) {<br />
+&nbsp; &nbsp; for (var layer = 1; layer &lt;= this.outputLayer; layer++) {										//对所有的层进行判断，除了输入层<br />
+&nbsp; &nbsp; &nbsp; var incoming = this.outputs[layer - 1];														//incoming为上一层的输出，这一层的输入<br />
+<br />
+&nbsp; &nbsp; &nbsp; for (var node = 0; node &lt; this.sizes[layer]; node++) {										//对当层的节点进行遍历<br />
+&nbsp; &nbsp; &nbsp; &nbsp; var delta = this.deltas[layer][node];														//获取到当前节点的delta	是一个数字，为下一层的error*下一层的output*(1-下一层的output)<br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; for (var k = 0; k &lt; incoming.length; k++) {													//根据上一层的输入节点<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var change = this.changes[layer][node][k];												//获取到变动前的change<br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change = (learningRate * delta * incoming[k])												//对当前节点的change进行修正 &nbsp;change = (学习比率 * 差值 * 上一层的该点的输出值) + (当前的保持的势能* 之前的change)<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;+ (this.momentum * change);														//其核心原理在于error越小-&gt;delta越小-&gt;change越小----&gt;具有逼近作用<br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; this.changes[layer][node][k] = change;													//对当前的change进行保存<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; this.weights[layer][node][k] += change;													//将change增加到weight上<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; this.biases[layer][node] += learningRate * delta;											//重新设置biases阈值<br />
+&nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; }<br />
+&nbsp; },<br />
+<br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">关键在于change 的计算和 weights的计算</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">change = (learningRate * delta * incoming[k])</span>&nbsp;<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">+ (this.momentum * change)&nbsp;</span><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">其核心原理在于error越小-&gt;delta越小-&gt;change越小----&gt;具有逼近作用</span></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><strong><span style="color:#E53333;">由上文可知delta是趋向于0的，因此change是最终趋向于0</span></strong><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">而weights的计算公式为</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">this.weights[layer][node][k] += change;</span></span></span></span>
+</p>
+<p>
+	<span style="color:#E53333;"><span style="font-size:13px;line-height:19.5px;color:#E53333;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;color:#E53333;background-color:#FFFFFF;"><strong>因为change最终趋于0，因此weights最终趋于固定值，即：神经网络的联结的权重最终趋于固定值。</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span style="color:#000000;font-size:24px;"><span style="font-size:24px;line-height:19.5px;color:#000000;background-color:#FFFFFF;"><span style="font-size:24px;line-height:19.5px;color:#000000;background-color:#FFFFFF;"><strong>第三章、运行</strong></span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">run: function(input) {<br />
+&nbsp; &nbsp; if (this.inputLookup) {<br />
+&nbsp; &nbsp; &nbsp; input = lookup.toArray(this.inputLookup, input);<br />
+&nbsp; &nbsp; }<br />
+<br />
+&nbsp; &nbsp; var output = this.runInput(input);<br />
+<br />
+&nbsp; &nbsp; if (this.outputLookup) {<br />
+&nbsp; &nbsp; &nbsp; output = lookup.toHash(this.outputLookup, output);<br />
+&nbsp; &nbsp; }<br />
+&nbsp; &nbsp; return output;<br />
+&nbsp; },<br />
+<br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">调用了runInput方法，最终的输出结果为output</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">方法不再赘述。</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">---------------------------------------------------------------------------------------------------</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">由以上分析看到，神经网络最大的作用就是“拟合”一个复杂函数，该函数输入一堆复杂的值，通过训练，使得一些小函数的和最终模拟出了一个确定的值(逼近论)。</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">这种特性在“图像识别”“声音识别”等机器视觉和机器听觉领域十分有用。</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">但是：上述例子的输出结果只能是0~1的数值，代表了是或者否的判断，例如输入一堆图片，判断这些图片上是否有一只猫，它会告诉你是或者否</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">倘若：你需要输入一堆图片，然后将图片分成五类，或者输出一个图片的色情度是0%还是10000%，它需要进行一些深度的改造。</span>
+</p>
+<p>
+	<span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">--------------------------------------------------------------------------------------------------</span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">由于人类大脑本身的运行机制还不清晰，因此很难说这种程度的人工智能能否真正匹配真实的人类智能。</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">但前段时间的阿尔法狗人机大战，说明了人类的智能或许在本质上就是一种对过往的拟合，兴许抽象点说：能看懂的都是科学，看不懂但是有效果的叫做智能，看不懂也没效果但是还有人信的叫做宗教</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><br />
+</span></span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;"><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">人工做了一个程序，实现了看不懂但是有效果的功能，这就是人工智能。</span></span></span>
+</p>
+<p>
+	<br />
+</p>
+<p>
+	此外人工智能领域从去年开始CNN比较火热，就是卷积神经网络，<span>用隐层的深度换单个隐层的宽度</span>，这又是另一个课题了，我比较有兴趣的是：卷积层究竟是由人类硬编码实现的？还是由人工智能训练出的？还是由人工智能在漫长的训练中自发形成的？
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<br />
+</p>
+
