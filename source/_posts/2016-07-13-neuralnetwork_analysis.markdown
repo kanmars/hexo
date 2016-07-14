@@ -6,17 +6,29 @@ date: 2016-07-13 19:13:00
 tags: [server,javascript]
 ---
 <p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">
 	在机器学习这一个未来的、伟大的领域，有一个小小的分支叫做人工智能。
+	</span></span>
 </p>
 <p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">
 	举个例子：照片识别、信用卡图片识别、声音语言解析、数据聚类与离散。
+	</span></span>
 </p>
 <p>
-	机器学习按照有无监督者（或者有无导师），区分为监督学习和无监督学习http://www.cnblogs.com/ysjxw/articles/1149004.html<br />
-监督学习是最常见的学习分类，在训练集中指出正确的结果，让网络自己去适应这种结果。
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">
+	机器学习按照有无监督者（或者有无导师），区分为监督学习和无监督学习http://www.cnblogs.com/ysjxw/articles/1149004.html
+	</span></span>
 </p>
 <p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">
+	监督学习是最常见的学习分类，在训练集中指出正确的结果，让网络自己去适应这种结果。
+	</span></span>
+</p>
+<p>
+	<span><span style="font-size:13px;line-height:19.5px;background-color:#FFFFFF;">
 	而无监督学习，则大致有两种实现思路。
+	</span></span>
 </p>
 <p>
 	<span style="font-family:Verdana, Geneva, Arial, Helvetica, sans-serif;font-size:13px;line-height:19.5px;background-color:#FFFFFF;">第一种思路是在指导Agent时不为其指定明确的分类，而是在成功时采用某种形式的激励制度。</span>
