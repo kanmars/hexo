@@ -5,7 +5,7 @@ desc: "[KANMARS原创]-SpringMVC源码解析(3) - 请求处理过程"
 date: 2016-11-18 14:44:00
 tags: [server,java]
 ---
-#二、SpringMVC的请求处理过程#
+# 二、SpringMVC的请求处理过程 #
 
 上一章讲了SpringMVC的启动过程，包括DispatcherServlet的启动与spring的启动。这一章我们在SpringMVC已经启动的基础上，讲一个request是如何接受与处理的。
 

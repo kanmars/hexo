@@ -5,7 +5,7 @@ desc: "[KANMARS原创]-SpringMVC源码解析(2) - 启动过程"
 date: 2016-11-17 17:48:00
 tags: [server,java]
 ---
-#一、SpringMVC的启动过程#
+# 一、SpringMVC的启动过程 #
 
 SpringMVC的启动过程即为Servlet的启动和Spring的启动两部分。
 
@@ -13,7 +13,7 @@ SpringMVC的启动过程即为Servlet的启动和Spring的启动两部分。
 
 因此我们需要从DispatcherServlet的启动说起。
 
-##1.1、DispatcherServlet的继承结构##
+## 1.1、DispatcherServlet的继承结构 ##
 DispatcherServlet的继承结构简单来说如下：
 
 DispatcherServlet->FrameworkServlet->HttpServletBean->HttpServlet
@@ -22,7 +22,7 @@ DispatcherServlet->FrameworkServlet->HttpServletBean->HttpServlet
 
 即：HttpServletBean.init();
 
-##1.2、DispatcherServlet的启动过程##
+## 1.2、DispatcherServlet的启动过程 ##
 
 有人喜欢用时序图来画启动过程，而我喜欢用调用顺序来画。
 
@@ -49,7 +49,7 @@ DispatcherServlet->FrameworkServlet->HttpServletBean->HttpServlet
 				│				└DispatcherServlet.initFlashMapManager(context)//从wac中获取对象
 				└FrameworkServlet.initFrameworkServlet()//从wac中获取对象
 
-##1.3、DispatcherServlet的默认配置##
+## 1.3、DispatcherServlet的默认配置 ##
 DispatcherServlet的默认配置在DispatcherServlet.properties中
 
 	org.springframework.web.servlet.LocaleResolver=org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver
@@ -81,7 +81,7 @@ DispatcherServlet的默认配置在DispatcherServlet.properties中
 	
 	viewResolver:FreeMarkerViewResolver
 
-##1.4、Spring的启动过程wac.refresh()##
+## 1.4、Spring的启动过程wac.refresh() ##
 Spring的启动过程是一致的，从spring.xml开始加载，例如：
 
 	<?xml version="1.0" encoding="UTF-8"?>

@@ -5,7 +5,7 @@ desc: "[KANMARS原创]-SpringMVC源码解析(4) - 视图处理器"
 date: 2016-11-18 16:51:00
 tags: [server,java]
 ---
-#三、SpringMVC的视图处理器#
+# 三、SpringMVC的视图处理器 #
 
 从上一篇文章我们已经看到了在获取到一个ModelAndView之后，会调用DispatcherServlet.processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);对用户进行响应
 
