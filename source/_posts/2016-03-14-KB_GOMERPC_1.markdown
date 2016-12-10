@@ -1,0 +1,557 @@
+---
+layout: post
+title:  "[KANMARS原创] - KB，国美金融未来的RPC框架（一）"
+desc: "本文介绍了国美金融未来的RPC框架KB的设计缘由和架构设计----更高的性能，更细的力度，更灵活的配置，更加适应未来。"
+date: 2016-03-14 00:15:00
+tags: [server,java]
+---
+<p>
+	KB，国美金融未来的RPC框架<span>（一）</span>，具有更高的性能，更细的力度，更灵活的配置，更加适应未来。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	之前公司为了更加适应互联网架构，一直在推行dubbo服务化，在实际中发现了一些无法解决的坑，例如：循环依赖问题、开发中经常会有接口文件冲突、接口不明确，web无法调用等缺点。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	尽管公司的总体架构方向是推行dubbo化，但是我们想做的更好！
+</p>
+<p>
+	在2016年，我们基本可以看到：未来是一个虚拟化的世界，各种虚拟、容器技术例如docker等将会支撑起大量的微服务,整个互联网将活在微服务上。这是潮流所趋，没有一个“集中化”的方案能解决所有问题，没有一个“高可用”的技术可以保证100%的可用。我们能做出的选择，只有不停的将系统拆分，拆分为互不关联、互不影响的独立个体，让大量的独立个体来保障整体的可用与健康发展。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	如果把软件也看作生命，过去的“集中式”是一种恐龙式的生命，不停的走向更大更强。---但是恐龙灭绝了，正如当今时代的集中式系统基本灭绝（除了几家银行被IOE等巨头忽悠出来的大集中系统）。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	因此我们如果想走得远，就需要向未来的方向靠拢，如果你不想走回头路，那么你需要看的更远！
+</p>
+<p>
+	因此，为了适应将来的docker和微服务，并且改进现有的dubbo的缺点，顺手解决几个来自无线部门的BUG，KB框架诞生了。
+</p>
+<p>
+	-----------------------------------------------------------------------------------------------------------------
+</p>
+<p>
+	KB框架是一款类似dubbo的rpc框架，用于系统间通信，例如你可以把web页面放在一个服务上，然后把logic服务放在另一个服务上。之所以我们会把web,logic,service,dao等拆分到不同的服务器上，为的其实是“复用”，很多架构师和我说了一堆的无用的理由，例如代码可以随时更新，随时发布等，但我认为，将一个流程的不同“层面”拆分到不同的服务上，可以将整个复杂的流程在“<span style="color:#E53333;background-color:#000000;">逻辑上切割为很多可前后连接的步骤</span>这样就可以在新扩展出业务的时候，选择最佳的步骤进行介入。例如，新开发了一条业务线如下：
+</p>
+<p>
+	A &nbsp;-》 &nbsp;B &nbsp; -》 &nbsp;C &nbsp; -》 &nbsp; D &nbsp; -》 &nbsp; E &nbsp;-》 &nbsp;F &nbsp;-》 &nbsp;G &nbsp;
+</p>
+<p>
+	如果新来了一个业务改造，就可以有7个接入点选择---》比起重新开发一套，这是非常划算的结构。
+</p>
+<p>
+	因此就可以改造成为
+</p>
+<p>
+	<span style="line-height:7.2px;">A &nbsp;-》 &nbsp;B &nbsp; -》 &nbsp;C &nbsp; -》 &nbsp; D &nbsp; -》 &nbsp; E &nbsp;-》 &nbsp;F &nbsp;-》 &nbsp;G</span>
+</p>
+<p>
+	&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ┕ &nbsp;-》 &nbsp; E' -》 &nbsp;F' -》 &nbsp;G'&nbsp;&nbsp;
+</p>
+<p>
+	&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="line-height:7.2px;">┕ &nbsp;-》 F'<span style="line-height:7.2px;">'</span>-》 &nbsp;G'<span style="line-height:7.2px;">'</span></span><span style="line-height:7.2px;"></span>
+</p>
+<p>
+	<span style="line-height:7.2px;"><span style="line-height:7.2px;"><br />
+</span></span>
+</p>
+<p>
+	这种结构会使得业务减少很多的改造，减少很多工作量
+</p>
+<p>
+	<br />
+</p>
+<p>
+	但缺陷在于：
+</p>
+<p>
+	1、层之间的语言不通时，会导致转换复杂。例如dubbo服务无法被外网访问
+</p>
+<p>
+	2、层之间的通讯性能消耗比较大，会成为一个新的瓶颈
+</p>
+<p>
+	3、最终会导致系统结构复杂。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	针对第一个问题，没有一个人尝试解决
+</p>
+<p>
+	针对第二个问题，很多程序员非常粗暴的对各种RPC框架进行“压力测试”，测出了一堆不靠谱的数据，然后说A框架性能比B框架好。颇有原始人看两个巫师比赛占卜之势。
+</p>
+<p>
+	针对第三个问题，很多公司开发了自己的“监控分析系统”，希望对服务点之间的关系进行“绘图”，最终绘出一个层次清晰的表单，进而描述系统的压力负载，系统消耗数据等等内容。
+</p>
+<p>
+	----------------------------------------------------------------
+</p>
+<p>
+	为解决问题1，KB系统采用了标准HTTP+JSON报文，并且支持采用配置的方式支持原生JSON或者Base64编码或者AES加密。<span style="line-height:7.2px;">其优势在于：“真正的互联网”，</span>支持服务器端对端调用，也支持浏览器对服务端直接调用，也支持APP、IOS客户端对服务端直接调用。
+</p>
+<p>
+	我认为互联不是指服务器与服务器之间的互联，也包含了浏览器、客户端与应用之间的互联。目前的RPC框架基本上全部都是服务器端和服务器端的交互，而没有考虑到随着时代的发展，移动设备的计算能力甚至已经近似等于服务器端，如果仅仅把移动设备看作一个“浏览器”这是多么浪费的行为，未来的时代将会是移动设备可以直接与服务器端交互的时代，因此，KB系统最重要的特征就是：通用的标准报文，支持任意设备访问，支持有或没有注册中心的访问。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	关于问题2，性能的问题，很多程序员非常粗暴，简单的对RPC框架调用十万次，算出平均时间就下结论说A框架性能比B框架的性能好。
+</p>
+<p>
+	用狗哥的话讲：这些我家的狗都会。
+</p>
+<p>
+	性能是个复杂的问题：性能是一个“用已有资源得到最优结果”的过程。已有资源包括CPU、带宽、内存、网络质量..........
+</p>
+<p>
+	所谓性能，是一种看锅下菜的工作。例如：<br />
+1、在CPU充足，带宽不足的地方，对报文进行压缩，那么系统性能就会表现优秀
+</p>
+<p>
+	2、在内存不足，CPU不足，带宽充足的地方，对报文进行简单处理直接发送，那么系统性能就会表现优秀
+</p>
+<p>
+	3、在网络质量差，但是CPU、带宽、内存比较充足的地方，就比较适合用一些大比例压缩和复杂分段传输的方法以达到优秀性能
+</p>
+<p>
+	。。。。。。
+</p>
+<p>
+	那些调用十万次算平均时间的，只能统计出一个结果：“统计出这个系统中有多少代码”。毕竟计算机是个很实在的东西，代码多了自然慢。
+</p>
+<p>
+	以下是KB与DUBBO的性能对比：
+</p>
+<p>
+	通信层： KB ： jetty &nbsp;对&nbsp; DUBBO : netty
+</p>
+<p>
+	协议转换层： KB JSONlib &nbsp; &nbsp; DUBBO:ObjectOutputStream
+</p>
+<p>
+	网络层:KB &nbsp;HTTP协议 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;DUBBO:dubbo协议
+</p>
+<p>
+	...........
+</p>
+<p>
+	从字面看，jetty是应用层框架，而netty是网络层框架，JSONlib是JSON转化包,而ObjectOutputStream
+</p>
+<p>
+	你可以猜测到：KB框架对CPU和内存的需求比DUBBO要高
+</p>
+<p>
+	但是你可以看到:由于使用了JSON协议，在复杂对象的格式转换和网络消耗上，KB框架是比DUBBO有一定优势的
+</p>
+<p>
+	参见https://github.com/eishay/jvm-serializers/wiki &nbsp;中的json和java原生序列化性能对比
+</p>
+<p>
+	据测试：KB框架的性能和DUBBO的性能基本没有差距。
+</p>
+<p>
+	<br />
+</p>
+<p>
+	关于问题3：为了使系统之间调用层次清晰可见，很多公司开发了服务监控框架。但事实上，服务和服务之间的关系复杂，最终将是N纬立体结构，无法用图来描述。做的好点的公司，一般是根据交易唯一ID来进行跟踪，跟踪某条交易在不同服务之间的调用关系，最终可以得到性能、成功率，稳定性等数据。
+</p>
+<p>
+	这儿有两条必走道路：
+</p>
+<p>
+	1、对系统整体进行规划，规划系统的架构统一，避免癌症一般的肆意发展
+</p>
+<p>
+	2、要求服务层级之间“完全的向下兼容”，尽量杜绝既有服务的修改（几乎不可能，但不代表不需要做）
+</p>
+<p>
+	--------------------------------------------------------------------------------------------------------------
+</p>
+<p>
+	接下来是正文：KB框架
+</p>
+<p>
+	内部包含8个子包
+</p>
+<p>
+	kb
+</p>
+<p>
+	&nbsp; kb-client &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;kb客户端
+</p>
+<p>
+	&nbsp; kb-config &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; kb配置
+</p>
+<p>
+	&nbsp; kb-core &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;kb依赖核心
+</p>
+<p>
+	&nbsp; kb-demo &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;kb演示demo
+</p>
+<p>
+	&nbsp; kb-properties &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;kb配置管理
+</p>
+<p>
+	&nbsp; kb-protocol &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; kb协议管理
+</p>
+<p>
+	&nbsp; kb-server &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; kb服务器端
+</p>
+<p>
+	&nbsp; kb-util &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; kb基础工具
+</p>
+<p>
+	<br />
+</p>
+<p>
+	入口可以从kb-demo开始看：
+</p>
+<p>
+	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+</p>
+<p>
+	<strong><span style="font-size:24px;">1、发布服务端，仅需3步</span></strong>
+</p>
+<p>
+	<span style="font-size:16px;"><strong>1.1、配置spring文件</strong></span>
+</p>
+<p>
+	<span style="background-color:#FFE500;">spring-server.xml</span>
+</p>
+<p>
+	&lt;?xml version="1.0" encoding="UTF-8"?&gt;<br />
+&lt;beans xmlns="http://www.springframework.org/schema/beans"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;xmlns:context="http://www.springframework.org/schema/context"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">xmlns:kb= "http://www.kanmars.cn/kb"</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;xsi:schemaLocation="<br />
+&nbsp; &nbsp; &nbsp; &nbsp;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd<br />
+&nbsp; &nbsp; &nbsp; &nbsp;http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd<br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">http://www.kanmars.cn/kb http://www.kanmars.cn/kb.xsd</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;"&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&lt;context:annotation-config&gt;&lt;/context:annotation-config&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;&lt;context:component-scan base-package="cn.kanmars.service"/&gt;<br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">&lt;kb:server id="kbserver1" bindip="0.0.0.0" bindport="9999" minthreadpool="5" maxthreadpool="150" register="localhost:2181" idleTimeout="30000"/&gt;</span><br />
+<span style="color:#E53333;background-color:#000000;">&nbsp; &nbsp; &nbsp; &nbsp;&lt;kb:server id="kbserver2" bindip="0.0.0.0" bindport="9998" minthreadpool="5" maxthreadpool="150" register="localhost:2181" idleTimeout="30000"/&gt;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">&lt;kb:properties id="getAesKeyFromSpring" value="123456"/&gt;</span><br />
+&lt;/beans&gt;
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<strong><span style="font-size:16px;">1.2、将一个方法注册到server上</span></strong><span style="font-size:16px;"></span>
+</p>
+<p>
+	<span style="background-color:#FFE500;">CCC.java</span>
+</p>
+<p>
+	package cn.kanmars.service;<br />
+<br />
+/**<br />
+&nbsp;* Created by baolong on 2016/3/7.<br />
+&nbsp;*/<br />
+@Service<br />
+public class CCC {<br />
+<br />
+&nbsp; &nbsp; <span style="color:#E53333;background-color:#000000;">@KBRouteServer(group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec0",servername="kbserver1",key = "NONE")</span><br />
+&nbsp; &nbsp; public Map exec0(Map reqInfo){<br />
+&nbsp; &nbsp; &nbsp; &nbsp; String s = "cn.kanmars.service.CCC.exec0";<br />
+&nbsp; &nbsp; &nbsp; &nbsp; LoggerUtil.print(LoggerUtil.INFO, "调用了服务[" + s + "]", null);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; return null;<br />
+&nbsp; &nbsp; }<br />
+&nbsp; &nbsp; <span style="color:#E53333;background-color:#000000;">@KBRouteServer(group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec1",servername="kbserver1",key = "getAesKeyFromSpring")</span><br />
+&nbsp; &nbsp; public Map exec1(Map reqInfo){<br />
+&nbsp; &nbsp; &nbsp; &nbsp; String s = "cn.kanmars.service.CCC.exec1";<br />
+&nbsp; &nbsp; &nbsp; &nbsp; LoggerUtil.print(LoggerUtil.INFO, "调用了服务[" + s + "]", null);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; return null;<br />
+&nbsp; &nbsp; }<br />
+}
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<strong><span style="font-size:16px;">1.3、启动spring</span></strong>
+</p>
+<p>
+	ServerDemo.java
+</p>
+<p>
+	public class ServerDemo {<br />
+&nbsp; &nbsp; public static void main(String[] args) {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; ClassPathXmlApplicationContext c = new ClassPathXmlApplicationContext("classpath:spring-server.xml");<br />
+&nbsp; &nbsp; &nbsp; &nbsp; Object cc = c.getBean("kbserver1");<br />
+&nbsp; &nbsp; }<br />
+}<br />
+<span style="color:#E53333;"></span>
+</p>
+<p>
+	<span style="line-height:14.4px;">--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span>
+</p>
+<p>
+	<strong><span style="font-size:24px;">2、发布客户端，仅需3步</span></strong>
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<span style="font-size:16px;"><strong>2.1、配置spring文件</strong></span>
+</p>
+<p>
+	<span style="background-color:#FFE500;">spring-client.xml</span>
+</p>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;<br />
+&lt;beans xmlns="http://www.springframework.org/schema/beans"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;xmlns:context="http://www.springframework.org/schema/context"<br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">xmlns:kb= "http://www.kanmars.cn/kb"</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;xsi:schemaLocation="<br />
+&nbsp; &nbsp; &nbsp; &nbsp;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd<br />
+&nbsp; &nbsp; &nbsp; &nbsp;http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd<br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color:#E53333;background-color:#000000;">http://www.kanmars.cn/kb http://www.kanmars.cn/kb.xsd</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;"&gt;<br />
+&nbsp; &nbsp; &lt;context:annotation-config&gt;&lt;/context:annotation-config&gt;<br />
+&nbsp; &nbsp; &lt;context:component-scan base-package="cn.kanmars.client"/&gt;<br />
+&nbsp; &nbsp; <span style="color:#E53333;background-color:#000000;">&lt;kb:client id="clientd" basepackage="cn.kanmars.client"/&gt;</span><br />
+&nbsp; &nbsp; <span style="color:#E53333;background-color:#000000;">&lt;kb:properties id="getAesKeyFromSpring" value="123456"/&gt;</span><br />
+&lt;/beans&gt;
+<p>
+	<br />
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<br />
+<strong><span style="font-size:16px;"></span></strong><strong><span style="font-size:16px;">2.2、配置访问代理</span></strong><strong><span style="font-size:16px;"></span></strong>
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<span style="background-color:#FFE500;">DDD.java</span>
+</p>
+<p>
+	/**<br />
+&nbsp;* Created by baolong on 2016/3/8.<br />
+&nbsp;*/<br />
+@Service<br />
+public class DDD {<br />
+&nbsp; &nbsp; <span style="background-color:#E53333;">@KBRouteClient(register = "localhost:2181",url = "",name="DDD_KB_0308",group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec0",key="getAesKeyFromSpring")</span><br />
+&nbsp; &nbsp; public KBRouteClientProxy kbRouteClientProxy;<br />
+<br />
+&nbsp; &nbsp; public void exec() {<br />
+&nbsp; &nbsp; &nbsp; &nbsp; long pre =System.currentTimeMillis();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; long now =System.currentTimeMillis();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; LoggerUtil.print(LoggerUtil.INFO, "初始时间["+(now-pre)+"]", null);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; HashMap param = new HashMap();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; Map result = null;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; for(int i=0;i&lt;1;i++){<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; try{<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //Thread.sleep(2000);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; result = <span style="color:#E53333;background-color:#000000;">kbRouteClientProxy.exec(param);</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //-----------------------------------<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; now =System.currentTimeMillis();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LoggerUtil.print(LoggerUtil.INFO, "第["+i+"]次调用耗时[" + (now - pre) + "]", null);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; pre =System.currentTimeMillis();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }catch (Exception e){<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; e.printStackTrace();<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; &nbsp; &nbsp; }<br />
+&nbsp; &nbsp; }
+</p>
+<p>
+	<br />
+</p>
+<strong><span style="font-size:16px;"></span></strong><strong><span style="font-size:16px;">2.3、启动spring</span></strong>
+<p>
+	<br />
+</p>
+<p>
+	ClientDemo.java
+</p>
+<p>
+	/**<br />
+&nbsp;* Created by baolong on 2016/3/8.<br />
+&nbsp;*/<br />
+public class ClientDemo {<br />
+<br />
+<br />
+&nbsp; &nbsp; public static void main(String[] args){<br />
+&nbsp; &nbsp; &nbsp; &nbsp; ClassPathXmlApplicationContext c = new ClassPathXmlApplicationContext("classpath:spring-client.xml");<br />
+&nbsp; &nbsp; &nbsp; &nbsp; DDD ddd = (DDD)c.getBean(DDD.class);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; ddd.exec();<br />
+&nbsp; &nbsp; }<br />
+<br />
+}
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<span style="line-height:14.4px;">--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span>
+</p>
+<p>
+	从以上内容可以看到KB框架的调用方式很简单，并且原理很易懂：
+</p>
+<p>
+	1、server将某个方法暴露到register代表的zookeeper上，并且对外提供服务
+</p>
+<p>
+	2、client在zookeeper上寻找对应的服务，并且生成代理后调用
+</p>
+<p>
+	<br />
+</p>
+<p>
+	与DUBBO的区别是:Dubbo是将一个“接口”暴露在外，而KB系统是将一个“方法”暴露在外，提供给客户端的是一个“属性”，因此KB具有更细的粒度。
+</p>
+<p>
+	之所以这么设计，是因为我们在实际中发现：DUBBO中某个接口里的方法很多，但是真正用的只有一两个，其他的方法都是没用的废方法，并且，如果谁新增了一个方法，会导致所有的开发人员报错，严重阻塞了系统进度。
+</p>
+<p>
+	我们在使用DUBBO时，不得不采取了各种奇葩的方法来避免这种问题。
+</p>
+<p>
+	追根究底是这样的原因：<br />
+1，作为调用者，只对被调用者感兴趣，其他无关的内容尽管在一个类，但是没有存在的必要
+</p>
+<p>
+	２，由于强制把不相关的内容聚合在一起，导致这些内容可能出现冲突
+</p>
+<p>
+	３，之所以dubbo将方法和类绑定到一起，是因为作者局限于类和方法的思维，不考虑将方法本身暴露出去的好处。
+</p>
+<p>
+	因此在KB系统中，我们直接采用方法与属性的细力度对方法进行了封装，仅需globalname和group就可以唯一确定一个服务并进行调用。
+</p>
+<p>
+	完美的解决了类的依赖，以及如果系统双方要互相调用，那么必须把class类进行互通的问题（也许一些人会批评我“你完全不懂什么是面对对象”，我会很坦荡的告诉他们：“请你回去看三年面对函数编程再来”）
+</p>
+<p>
+	<span style="line-height:14.4px;">--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span>
+</p>
+<p>
+	同时，如果你在浏览器中访问如下地址
+</p>
+<p>
+	http://localhost:9999/cn.kanmars.service.CCC.exec0
+</p>
+<p>
+	你会看到如下结果：
+</p>
+<p>
+	{"RSPCODE":"0002","RSPMSG":{"RSPCODE":"0002","RSPDESC":"报文格式不正确"},"RSPDESC":"报文格式不正确"}
+</p>
+<p>
+	这是KB比DUBBO最大的优势：可以在内网由java客户端调用，也可以将服务暴露到外网，由javascript,app,ios等直接调用，在新的互联网时代，一定要了解“互联”的概念，不要局限于局域网。
+</p>
+<p>
+	<span style="line-height:14.4px;">--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span>
+</p>
+<p>
+	有人会质疑：安全么？
+</p>
+<p>
+	请访问另一个地址
+</p>
+<p>
+	<span>http://localhost:9999/cn.kanmars.service.CCC.exec1</span>
+</p>
+<p>
+	你会看到如下结果：
+</p>
+<p>
+	{"RSPCODE":"0002","RSPMSG":"yc7h9oGF6iOVKX6QrhHpx3jTpxTbiI6wo6Y1w3nE1xqp7AjahtxrOVLg0WERoZPuljktOifC09jRvWul593iXg==","RSPDESC":"报文格式不正确"}
+</p>
+<p>
+	可以看到RSPMSG为加密后的结果，从配置可以看出来，此配置已经将加密内容配置上去，极大的保障了安全性
+</p>
+<p>
+	@KBRouteServer(group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec1",servername="kbserver1",<span style="color:#E53333;background-color:#000000;">key = "getAesKeyFromSpring"</span>)
+</p>
+<p>
+	同时，密钥可以通过spring的beanFactoryPostProcessor机制储存在各种机制中，如数据库、diamond、配置、环境变量等处
+</p>
+<p>
+	&lt;kb:properties id="getAesKeyFromSpring" value="123456"/&gt;
+</p>
+<p>
+	KB系统支持三种通讯加密方式：
+</p>
+<p>
+	key="NONE" &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;不加密
+</p>
+<p>
+	key="BASE64" &nbsp; &nbsp; &nbsp; &nbsp;采用BASE64编码
+</p>
+<p>
+	key="其他" &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;采用aes加密
+</p>
+<p>
+	通过如上加密方式，在通讯报文中，还会有sign签名信息对报文整体进行校验，最终保障通讯安全。
+</p>
+<p>
+	也就是说，如果是内网，就可以采用NONE
+</p>
+<p>
+	如果是安全的外网，可以采用NONE
+</p>
+<p>
+	如果是需要混淆的外网，可以使用混淆后的BASE64
+</p>
+<p>
+	如果是需要严格加密，可以实用AES加密
+</p>
+<p>
+	整个过程配置简单，仅需客户端和服务器端配置的密钥字符串相同即可
+</p>
+<p>
+	服务器端 &nbsp;： &nbsp; @KBRouteServer(group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec1",servername="kbserver1",<span style="color:#E53333;background-color:#000000;">key = "getAesKeyFromSpring"</span>)
+</p>
+<p>
+	客户端 &nbsp; &nbsp; ： &nbsp;&nbsp;@KBRouteClient(register = "localhost:2181",url = "",name="DDD_KB_0308",group = "KB_DEFAULT",globalname = "cn.kanmars.service.CCC.exec0",<span style="color:#E53333;background-color:#000000;">key="getAesKeyFromSpring"</span>)
+</p>
+<p>
+	<span style="line-height:1.5;">&nbsp;<span style="line-height:14.4px;">--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span></span>
+</p>
+<p>
+	<span style="line-height:1.5;"><br />
+</span>
+</p>
+<p>
+	<span style="line-height:1.5;">关于系统架构</span>
+</p>
+<p>
+	<span style="line-height:1.5;">。。。。。。。</span>
+</p>
+<p>
+	<span style="line-height:1.5;">12点了，改天再写</span>
+</p>
+<p>
+	<br />
+</p>
+<p>
+	<br />
+</p>

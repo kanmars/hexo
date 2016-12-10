@@ -1,0 +1,235 @@
+---
+layout: post
+title:  "交易开拓者中MA线的画法"
+desc: "介绍交易开拓者的MA线语法"
+date: 2015-06-27 23:06:00
+tags: [tb,strategy]
+---
+<body lang=ZH-CN style='tab-interval:21.0pt;text-justify-trim:punctuation'>
+
+<div class=WordSection1>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>这是TB中简单的移动均线<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>//------------------------------------------------------------------------<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>// 简称: MA<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>// 名称: 移动平均线<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>// 类别: 公式应用<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>// 类型: 内建应用<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>//------------------------------------------------------------------------<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span class=SpellE><span
+lang=EN-US style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>Params</span></span><span lang=EN-US style='font-size:
+11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt'><o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Numeric
+<span class=GramE>Length1(</span>5);<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Numeric
+<span class=GramE>Length2(</span>10);<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Numeric
+<span class=GramE>Length3(</span>20); <o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Numeric
+<span class=GramE>Length4(</span>30);<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>Begin<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE><span class=GramE>PlotNumeric</span></span><span class=GramE>(</span>&quot;MA1&quot;,AverageFC(Close,Length1));<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE><span class=GramE>PlotNumeric</span></span><span class=GramE>(</span>&quot;MA2&quot;,AverageFC(Close,Length2));<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE><span class=GramE>PlotNumeric</span></span><span class=GramE>(</span>&quot;MA3&quot;,AverageFC(Close,Length3));<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE><span class=GramE>PlotNumeric</span></span><span class=GramE>(</span>&quot;MA4&quot;,AverageFC(Close,Length4));<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>End<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>//------------------------------------------------------------------------<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>// </span><span style='font-size:11.0pt;font-family:宋体;
+mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;mso-bidi-font-family:
+宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:ZH-CN'>编译版本</span><span
+lang=EN-US style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>GS2010.12.08<o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>// </span><span style='font-size:11.0pt;font-family:宋体;
+mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;mso-bidi-font-family:
+宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:ZH-CN'>版权所有</span><span
+lang=EN-US style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE>TradeBlazer</span> Software 2003</span><span style='font-size:
+11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt'>－<span lang=EN-US>2010<o:p></o:p></span></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>// </span><span style='font-size:11.0pt;font-family:宋体;
+mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;mso-bidi-font-family:
+宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:ZH-CN'>更改声明</span><span
+lang=EN-US style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+class=SpellE>TradeBlazer</span> Software</span><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>保留对</span><span class=SpellE><span lang=EN-US style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt'>TradeBlazer</span></span><span
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt;mso-ansi-language:ZH-CN'>平</span><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'><o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span lang=EN-US
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>//<span style='mso-tab-count:3'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><span
+style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt;mso-ansi-language:ZH-CN'>台每一版本的</span><span class=SpellE><span
+lang=EN-US style='font-size:11.0pt;font-family:宋体;mso-hansi-font-family:Calibri;
+mso-hansi-theme-font:minor-latin;mso-bidi-font-family:宋体;color:black;
+mso-font-kerning:0pt'>TradeBlazer</span></span><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>公式修改和重写的权利</span><span lang=EN-US style='font-size:11.0pt;font-family:
+宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;mso-bidi-font-family:
+宋体;color:black;mso-font-kerning:0pt'><o:p></o:p></span></p>
+
+<p class=MsoNormal align=left style='text-align:left;tab-stops:60.0pt 120.0pt 180.0pt 240.0pt 300.0pt 360.0pt 420.0pt 480.0pt 540.0pt 600.0pt 660.0pt 720.0pt 780.0pt 840.0pt 900.0pt 960.0pt 1020.0pt 1080.0pt 1140.0pt 1200.0pt 1260.0pt 1320.0pt 1380.0pt 1440.0pt 1500.0pt 1560.0pt;
+mso-layout-grid-align:none;text-autospace:none'><span style='font-size:11.0pt;
+font-family:宋体;mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:宋体;color:black;mso-font-kerning:0pt;mso-ansi-language:
+ZH-CN'>//------------------------------------------------------------------------<o:p></o:p></span></p>
+
+<p class=MsoNormal><span lang=EN-US><o:p>&nbsp;</o:p></span></p>
+
+</div>
+
+</body>
